@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sylvia · Agente de Alertas</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#07090d;--s1:#0d1017;--s2:#111520;--s3:#161b27;--bd:#1c2233;--bd2:#222840;--g:#0dff8c;--y:#ffc337;--r:#ff3a5c;--b:#3d7fff;--tx:#dde3f0;--mu:#4a5470;--fd:'Bebas Neue',sans-serif;--fb:'DM Sans',sans-serif;--fm:'DM Mono',monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--fb);background:var(--bg);color:var(--tx);min-height:100dvh;display:flex;flex-direction:column}
+
+header{background:var(--s1);border-bottom:1px solid var(--bd);padding:0 16px;height:54px;display:flex;align-items:center;gap:12px;flex-shrink:0}
+.logo{font-family:var(--fd);font-size:22px;letter-spacing:.06em;color:var(--g)}
+.logo-sub{font-size:9px;color:var(--mu);font-family:var(--fm);letter-spacing:.1em;text-transform:uppercase;margin-top:1px}
+.hdiv{width:1px;height:24px;background:var(--bd);margin:0 4px}
+#clock{font-family:var(--fm);font-size:11px;color:var(--mu)}
+#mstatus{font-size:9px;padding:2px 8px;border-radius:10px;font-family:var(--fm);letter-spacing:.08em;text-transform:uppercase}
+.mopen{background:#0dff8c18;color:var(--g);border:1px solid #0dff8c30}
+.mclosed{background:#ff3a5c18;color:var(--r);border:1px solid #ff3a5c30}
+
+.main{flex:1;padding:16px;display:flex;flex-direction:column;gap:14px;max-width:480px;margin:0 auto;width:100%}
+
+/* STATUS CARD */
+.status-card{background:var(--s1);border:1px solid var(--bd);border-radius:16px;overflow:hidden}
+.status-top{padding:14px 16px;display:flex;align-items:center;gap:14px}
+.status-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
+.status-icon.off{background:var(--s2);border:1px solid var(--bd2)}
+.status-icon.on{background:linear-gradient(135deg,#0dff8c20,#3d7fff20);border:1px solid #0dff8c30;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 #0dff8c30}50%{box-shadow:0 0 0 8px #0dff8c00}}
+.status-info h2{font-family:var(--fd);font-size:20px;letter-spacing:.06em}
+.status-info p{font-size:11px;color:var(--mu);font-family:var(--fm);margin-top:2px}
+.status-divider{height:1px;background:var(--bd);margin:0 16px}
+.status-stats{display:flex;padding:10px 0}
+.sstat{flex:1;text-align:center;border-right:1px solid var(--bd)}
+.sstat:last-child{border-right:none}
+.sstat-val{font-family:var(--fd);font-size:20px}
+.sstat-lbl{font-size:8px;color:var(--mu);font-family:var(--fm);letter-spacing:.08em;text-transform:uppercase;margin-top:1px}
+
+/* BIG TOGGLE */
+#togglebtn{width:100%;padding:16px;border-radius:14px;border:none;font-family:var(--fd);font-size:20px;letter-spacing:.1em;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:10px}
+#togglebtn.start{background:linear-gradient(90deg,var(--g),var(--b));color:#000}
+#togglebtn.stop{background:linear-gradient(90deg,var(--r),#ff8c00);color:#fff}
+#togglebtn:disabled{opacity:.5;cursor:default}
+
+/* CONFIG */
+.config-card{background:var(--s1);border:1px solid var(--bd);border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.config-title{font-family:var(--fd);font-size:16px;letter-spacing:.06em;color:var(--mu)}
+.config-row{display:flex;justify-content:space-between;align-items:center}
+.config-label{font-size:12px;color:var(--mu);font-family:var(--fm)}
+.config-val{font-size:12px;font-family:var(--fm);color:var(--tx)}
+select,input[type=range]{background:var(--s2);border:1px solid var(--bd2);border-radius:8px;color:var(--tx);font-family:var(--fm);font-size:11px;padding:4px 8px;outline:none}
+select option{background:var(--s2)}
+.mode-row{display:flex;gap:6px}
+.mpill{padding:5px 12px;border-radius:20px;font-size:10px;font-family:var(--fm);letter-spacing:.06em;cursor:pointer;border:1px solid var(--bd2);background:transparent;color:var(--mu);transition:all .18s;text-transform:uppercase}
+.mpill.oc{background:#0dff8c15;border-color:var(--g);color:var(--g)}
+.mpill.oa{background:#ff3a5c15;border-color:var(--r);color:var(--r)}
+
+/* LOG */
+.log-card{background:var(--s1);border:1px solid var(--bd);border-radius:16px;overflow:hidden;flex:1}
+.log-header{padding:10px 16px;border-bottom:1px solid var(--bd);display:flex;justify-content:space-between;align-items:center}
+.log-title{font-family:var(--fd);font-size:16px;letter-spacing:.06em;color:var(--mu)}
+.log-clear{background:transparent;border:1px solid var(--bd2);color:var(--mu);font-size:9px;font-family:var(--fm);padding:3px 8px;border-radius:6px;cursor:pointer}
+.log-body{padding:10px 14px;display:flex;flex-direction:column;gap:6px;max-height:280px;overflow-y:auto}
+.log-body::-webkit-scrollbar{width:3px}
+.log-body::-webkit-scrollbar-thumb{background:var(--bd2)}
+.log-entry{display:flex;align-items:flex-start;gap:8px;padding:7px 9px;background:var(--s2);border-radius:9px;border:1px solid var(--bd);font-size:11px;animation:fu .2s ease}
+@keyframes fu{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.log-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:3px}
+.log-dot.g{background:var(--g)}.log-dot.r{background:var(--r)}.log-dot.y{background:var(--y)}.log-dot.k{background:var(--mu)}.log-dot.b{background:var(--b)}
+.log-text{flex:1;line-height:1.4;color:var(--tx)}
+.log-time{font-family:var(--fm);font-size:9px;color:var(--mu);white-space:nowrap;margin-top:1px}
+.log-empty{text-align:center;color:var(--mu);font-size:11px;padding:20px 0;font-family:var(--fm)}
+
+/* TEST BTN */
+.test-btn{width:100%;padding:10px;border-radius:12px;border:1px solid var(--bd2);background:var(--s2);color:var(--mu);font-family:var(--fm);font-size:11px;cursor:pointer;letter-spacing:.06em;text-transform:uppercase;transition:all .15s}
+.test-btn:hover{border-color:var(--b);color:var(--b);background:#3d7fff10}
+
+/* NEXT SCAN */
+.next-scan{text-align:center;font-family:var(--fm);font-size:10px;color:var(--mu);padding:4px 0}
+</style>
+</head>
+<body>
+
+<header>
+  <div><div class="logo">SYLVIA</div><div class="logo-sub">Agente de Alertas</div></div>
+  <div class="hdiv"></div>
+  <div><div id="clock">--:--</div><div id="mstatus" class="mclosed">● CERRADO</div></div>
+</header>
+
+<div class="main">
+
+  <!-- STATUS -->
+  <div class="status-card">
+    <div class="status-top">
+      <div class="status-icon off" id="status-icon">⏸</div>
+      <div class="status-info">
+        <h2 id="status-title">AGENTE INACTIVO</h2>
+        <p id="status-sub">Presiona INICIAR para comenzar</p>
+      </div>
+    </div>
+    <div class="status-divider"></div>
+    <div class="status-stats">
+      <div class="sstat"><div class="sstat-val" style="color:var(--g)" id="cnt-green">0</div><div class="sstat-lbl">🟢 Verdes</div></div>
+      <div class="sstat"><div class="sstat-val" style="color:var(--y)" id="cnt-yellow">0</div><div class="sstat-lbl">🟡 Esperar</div></div>
+      <div class="sstat"><div class="sstat-val" style="color:var(--r)" id="cnt-red">0</div><div class="sstat-lbl">🔴 No op.</div></div>
+      <div class="sstat"><div class="sstat-val" style="color:var(--mu)" id="cnt-scans">0</div><div class="sstat-lbl">Análisis</div></div>
+    </div>
+  </div>
+
+  <!-- TOGGLE -->
+  <button id="togglebtn" class="start" onclick="toggleAgent()">▶ INICIAR AGENTE</button>
+  <div class="next-scan" id="next-scan"></div>
+
+  <!-- CONFIG -->
+  <div class="config-card">
+    <div class="config-title">CONFIGURACIÓN</div>
+    <div class="config-row">
+      <span class="config-label">Modo de trading</span>
+      <div class="mode-row">
+        <button class="mpill oc" id="pc" onclick="setMode('CONSERVADOR')">🛡 CONS</button>
+        <button class="mpill" id="pa" onclick="setMode('AGRESIVO')">⚡ AGR</button>
+      </div>
+    </div>
+    <div class="config-row">
+      <span class="config-label">Intervalo de análisis</span>
+      <select id="interval-select" onchange="updateInterval()">
+        <option value="5">Cada 5 min</option>
+        <option value="10">Cada 10 min</option>
+        <option value="15">Cada 15 min</option>
+      </select>
+    </div>
+    <div class="config-row">
+      <span class="config-label">Alertar cuando</span>
+      <select id="alert-filter">
+        <option value="green">Solo señal 🟢</option>
+        <option value="all">Todas las señales</option>
+        <option value="stop">Solo parar ⚫</option>
+      </select>
+    </div>
+    <div class="config-row">
+      <span class="config-label">Solo en horario de mercado</span>
+      <select id="market-only">
+        <option value="yes">Sí (recomendado)</option>
+        <option value="no">No</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- TEST -->
+  <button class="test-btn" onclick="sendTest()">📨 ENVIAR MENSAJE DE PRUEBA A TELEGRAM</button>
+
+  <!-- LOG -->
+  <div class="log-card">
+    <div class="log-header">
+      <div class="log-title">REGISTRO DE ALERTAS</div>
+      <button class="log-clear" onclick="clearLog()">Limpiar</button>
+    </div>
+    <div class="log-body" id="log-body">
+      <div class="log-empty" id="log-empty">Aún no hay alertas enviadas.</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── CONFIG ─────────────────────────────────
+const TELEGRAM_TOKEN = '8262212059:AAEI0UHhW_89KwyJJqrkRtmRnUsYzLRd4mw';
+const CHAT_ID = '7464619758';
+const FINNHUB_KEY = 'd7190fpr01qot5jchuo0d7190fpr01qot5jchuog';
+const ETFS = ['QQQ','SPY','TQQQ','SOXL','XLK','SMH','XLE','XLF','ARKK'];
+
+let mode = 'CONSERVADOR';
+let agentOn = false;
+let scanInterval = null;
+let countdownInterval = null;
+let nextScanTime = null;
+let counts = {green:0,yellow:0,red:0,scans:0};
+let logEntries = [];
+let intervalMinutes = 5;
+
+// ── CLOCK ───────────────────────────────────
+function updateClock(){
+  const t=new Date().toLocaleString('en-US',{timeZone:'America/Panama',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+  document.getElementById('clock').textContent=t+' PTY';
+  const [h,m]=t.split(':').map(Number),mins=h*60+m,el=document.getElementById('mstatus');
+  if(mins>=570&&mins<960){el.textContent='● ABIERTO';el.className='mopen';}
+  else{el.textContent='● CERRADO';el.className='mclosed';}
+}
+setInterval(updateClock,1000);updateClock();
+
+// ── MODE ────────────────────────────────────
+function setMode(m){
+  mode=m;
+  document.getElementById('pc').className='mpill'+(m==='CONSERVADOR'?' oc':'');
+  document.getElementById('pa').className='mpill'+(m==='AGRESIVO'?' oa':'');
+  addLog('b','⚙️ Modo cambiado a '+m);
+}
+
+function updateInterval(){
+  intervalMinutes=parseInt(document.getElementById('interval-select').value);
+  if(agentOn){ stopAgent(); startAgent(); }
+}
+
+// ── MARKET CHECK ────────────────────────────
+function isMarketOpen(){
+  const t=new Date().toLocaleString('en-US',{timeZone:'America/Panama',hour:'2-digit',minute:'2-digit',hour12:false});
+  const [h,m]=t.split(':').map(Number),mins=h*60+m;
+  return mins>=570&&mins<960;
+}
+
+function getMarketZone(){
+  const t=new Date().toLocaleString('en-US',{timeZone:'America/Panama',hour:'2-digit',minute:'2-digit',hour12:false});
+  const [h,m]=t.split(':').map(Number),mins=h*60+m;
+  if(mins>=570&&mins<630) return{zone:'APERTURA 🟢',quality:'EXCELENTE'};
+  if(mins>=630&&mins<720) return{zone:'MAÑANA 🟢',quality:'BUENO'};
+  if(mins>=720&&mins<840) return{zone:'MEDIODÍA 🔴',quality:'EVITAR'};
+  if(mins>=840&&mins<900) return{zone:'TARDE 🟡',quality:'PRECAUCIÓN'};
+  if(mins>=900&&mins<960) return{zone:'CIERRE 🟢',quality:'FUERTE'};
+  return{zone:'CERRADO 🔴',quality:'NO OPERAR'};
+}
+
+// ── FETCH PRICES ────────────────────────────
+async function fetchBestETF(){
+  const results=[];
+  await Promise.all(ETFS.map(async sym=>{
+    try{
+      const res=await fetch(`https://finnhub.io/api/v1/quote?symbol=${sym}&token=${FINNHUB_KEY}`);
+      const d=await res.json();
+      if(d&&d.c>0){
+        const chg=d.dp||(d.c-d.pc)/d.pc*100;
+        results.push({sym,price:d.c,chg,high:d.h,low:d.l,prev:d.pc});
+      }
+    }catch(e){}
+  }));
+  if(!results.length)return null;
+  // Pick ETF with strongest positive momentum
+  results.sort((a,b)=>Math.abs(b.chg)-Math.abs(a.chg));
+  return results[0];
+}
+
+// ── ANALYZE & ALERT ─────────────────────────
+async function runScan(){
+  counts.scans++;
+  document.getElementById('cnt-scans').textContent=counts.scans;
+  addLog('b','🔍 Analizando mercado...');
+
+  const marketOnly=document.getElementById('market-only').value==='yes';
+  const alertFilter=document.getElementById('alert-filter').value;
+  const zone=getMarketZone();
+
+  if(marketOnly&&!isMarketOpen()){
+    addLog('k','😴 Mercado cerrado — esperando apertura (9:30 PTY)');
+    return;
+  }
+
+  // Fetch prices
+  const best=await fetchBestETF();
+  const pty=new Date().toLocaleTimeString('es-PA',{hour:'2-digit',minute:'2-digit'});
+
+  let decision,semaforo,etf,precio,cambio,razon,tipo;
+
+  if(!best){
+    // No prices — use time-based analysis
+    if(!isMarketOpen()){
+      decision='NO OPERAR';semaforo='🔴';etf='—';precio='N/A';cambio='N/A';
+      razon='Mercado cerrado.';tipo='NO APLICA';
+    } else if(zone.quality==='EVITAR'){
+      decision='NO OPERAR';semaforo='🔴';etf='—';precio='N/A';cambio='N/A';
+      razon='Zona de baja liquidez (12-14h). Evitar.';tipo='ERRÁTICO';
+    } else {
+      decision='ESPERAR';semaforo='🟡';etf='QQQ';precio='N/A';cambio='N/A';
+      razon='Sin precios disponibles. Verifica tu conexión.';tipo='CONTINUACIÓN';
+    }
+  } else {
+    etf=best.sym;
+    precio='$'+best.price.toFixed(2);
+    cambio=(best.chg>0?'▲':'▼')+Math.abs(best.chg).toFixed(2)+'%';
+
+    if(zone.quality==='EVITAR'){
+      decision='NO OPERAR';semaforo='🔴';
+      razon=`Zona de mediodía — baja liquidez. ${etf} en ${precio} (${cambio}). Mejor esperar.`;
+      tipo='ERRÁTICO';
+    } else if(best.chg>1.5){
+      if(mode==='CONSERVADOR'){
+        decision='ESPERAR';semaforo='🟡';
+        razon=`${etf} subió ${cambio} — posible entrada tardía. Modo conservador: espera pullback.`;
+        tipo='TARDÍO';
+      } else {
+        decision='COMPRAR';semaforo='🟢';
+        razon=`${etf} con momentum fuerte (${cambio}). Precio: ${precio}. Zona: ${zone.zone}.`;
+        tipo='MOMENTUM';
+      }
+    } else if(best.chg>0.3&&best.chg<=1.5){
+      decision='COMPRAR';semaforo='🟢';
+      razon=`${etf} subiendo ${cambio} con movimiento limpio. Precio: ${precio}. Zona: ${zone.zone}.`;
+      tipo=best.chg>0.8?'MOMENTUM':'INICIO';
+    } else if(best.chg>=-0.3&&best.chg<0.3){
+      decision='ESPERAR';semaforo='🟡';
+      razon=`${etf} en ${precio} (${cambio}) — mercado lateral. Esperar dirección clara.`;
+      tipo='ERRÁTICO';
+    } else if(best.chg<-1.5){
+      decision='NO OPERAR';semaforo='🔴';
+      razon=`${etf} cayendo fuerte ${cambio}. Precio: ${precio}. No operar en caída.`;
+      tipo='CAÍDA';
+    } else {
+      decision='NO OPERAR';semaforo='🔴';
+      razon=`${etf} en ${precio} (${cambio}) — sin claridad suficiente. Modo ${mode}.`;
+      tipo='ERRÁTICO';
+    }
+  }
+
+  // Update counts
+  if(decision==='COMPRAR') counts.green++;
+  else if(decision==='ESPERAR') counts.yellow++;
+  else counts.red++;
+  document.getElementById('cnt-green').textContent=counts.green;
+  document.getElementById('cnt-yellow').textContent=counts.yellow;
+  document.getElementById('cnt-red').textContent=counts.red;
+
+  // Log
+  const dotColor=decision==='COMPRAR'?'g':decision==='ESPERAR'?'y':decision==='PARAR'?'k':'r';
+  addLog(dotColor,`${semaforo} ${etf} — ${decision} | ${precio} ${cambio}`);
+
+  // Send to Telegram based on filter
+  const shouldSend=(alertFilter==='all')||
+    (alertFilter==='green'&&decision==='COMPRAR')||
+    (alertFilter==='stop'&&decision==='PARAR');
+
+  if(shouldSend){
+    const msg=`${semaforo} *SYLVIA TRADING ALERT*\n\n`+
+      `🕐 ${pty} PTY\n`+
+      `📊 ETF: *${etf}*\n`+
+      `💰 Precio: ${precio}\n`+
+      `📈 Cambio: ${cambio}\n`+
+      `🎯 Decisión: *${decision}*\n`+
+      `📍 Tipo: ${tipo}\n`+
+      `🏁 Zona: ${zone.zone}\n`+
+      `⚙️ Modo: ${mode}\n\n`+
+      `💬 ${razon}`;
+    await sendTelegram(msg);
+  }
+}
+
+// ── SEND TELEGRAM ───────────────────────────
+async function sendTelegram(text){
+  const telegramUrl=`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
+  const payload={chat_id:CHAT_ID,text,parse_mode:'Markdown'};
+  const bodyStr=JSON.stringify(payload);
+  const headers={'Content-Type':'application/json'};
+
+  const proxies=[
+    async()=>{
+      const r=await fetch(telegramUrl,{method:'POST',headers,body:bodyStr});
+      return r.json();
+    },
+    async()=>{
+      const r=await fetch('https://corsproxy.io/?'+encodeURIComponent(telegramUrl),{method:'POST',headers,body:bodyStr});
+      return r.json();
+    },
+    async()=>{
+      // Use GET with URL params as last resort
+      const params=new URLSearchParams({chat_id:CHAT_ID,text,parse_mode:'Markdown'});
+      const r=await fetch(`${telegramUrl}?${params}`);
+      return r.json();
+    }
+  ];
+
+  for(let i=0;i<proxies.length;i++){
+    try{
+      const d=await proxies[i]();
+      if(d&&d.ok){
+        addLog('g','✅ Alerta enviada a Telegram ✈️');
+        return true;
+      } else if(d&&d.description){
+        addLog('r','❌ Error Telegram: '+d.description);
+        return false;
+      }
+    }catch(e){
+      if(i===proxies.length-1){
+        addLog('r','❌ Error de red. Asegúrate de tener internet activo.');
+        addLog('y','💡 Si el problema persiste, sube el archivo a GitHub Pages.');
+      }
+    }
+  }
+  return false;
+}
+
+// ── TEST ────────────────────────────────────
+async function sendTest(){
+  addLog('b','📨 Enviando mensaje de prueba...');
+  const pty=new Date().toLocaleTimeString('es-PA',{hour:'2-digit',minute:'2-digit'});
+  const msg=`🟢 *SYLVIA TRADING — PRUEBA*\n\n`+
+    `✅ Tu agente de alertas está funcionando correctamente.\n\n`+
+    `🕐 Hora: ${pty} PTY\n`+
+    `⚙️ Modo: ${mode}\n`+
+    `🔄 Intervalo: cada ${intervalMinutes} minutos\n\n`+
+    `¡Listo para avisarte cuando entrar! 🚀`;
+  await sendTelegram(msg);
+}
+
+// ── AGENT CONTROL ───────────────────────────
+function toggleAgent(){
+  if(agentOn) stopAgent();
+  else startAgent();
+}
+
+function startAgent(){
+  agentOn=true;
+  document.getElementById('togglebtn').textContent='⏹ DETENER AGENTE';
+  document.getElementById('togglebtn').className='stop';
+  document.getElementById('status-icon').className='status-icon on';
+  document.getElementById('status-icon').textContent='📡';
+  document.getElementById('status-title').textContent='AGENTE ACTIVO';
+  document.getElementById('status-sub').textContent='Analizando cada '+intervalMinutes+' minutos';
+  addLog('g','🚀 Agente iniciado — análisis cada '+intervalMinutes+' min');
+
+  // Run immediately then set interval
+  runScan();
+  scanInterval=setInterval(runScan, intervalMinutes*60*1000);
+
+  // Countdown
+  nextScanTime=Date.now()+intervalMinutes*60*1000;
+  countdownInterval=setInterval(updateCountdown,1000);
+}
+
+function stopAgent(){
+  agentOn=false;
+  clearInterval(scanInterval);
+  clearInterval(countdownInterval);
+  document.getElementById('togglebtn').textContent='▶ INICIAR AGENTE';
+  document.getElementById('togglebtn').className='start';
+  document.getElementById('status-icon').className='status-icon off';
+  document.getElementById('status-icon').textContent='⏸';
+  document.getElementById('status-title').textContent='AGENTE INACTIVO';
+  document.getElementById('status-sub').textContent='Presiona INICIAR para comenzar';
+  document.getElementById('next-scan').textContent='';
+  addLog('k','⏹ Agente detenido');
+}
+
+function updateCountdown(){
+  if(!agentOn)return;
+  const remaining=Math.max(0,nextScanTime-Date.now());
+  const m=Math.floor(remaining/60000),s=Math.floor((remaining%60000)/1000);
+  document.getElementById('next-scan').textContent=`Próximo análisis en ${m}:${s.toString().padStart(2,'0')}`;
+  if(remaining<=0) nextScanTime=Date.now()+intervalMinutes*60*1000;
+}
+
+// ── LOG ─────────────────────────────────────
+function addLog(color,text){
+  const empty=document.getElementById('log-empty');
+  if(empty)empty.remove();
+  const body=document.getElementById('log-body');
+  const t=new Date().toLocaleTimeString('es-PA',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const div=document.createElement('div');
+  div.className='log-entry';
+  div.innerHTML=`<div class="log-dot ${color}"></div><div class="log-text">${text}</div><div class="log-time">${t}</div>`;
+  body.insertBefore(div,body.firstChild);
+  logEntries.push({color,text,t});
+  // Keep max 50 entries
+  if(body.children.length>50) body.removeChild(body.lastChild);
+}
+
+function clearLog(){
+  document.getElementById('log-body').innerHTML='<div class="log-empty" id="log-empty">Aún no hay alertas enviadas.</div>';
+  logEntries=[];
+}
+</script>
+</body>
+</html>
